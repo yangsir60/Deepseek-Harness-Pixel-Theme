@@ -1,0 +1,12 @@
+# 依赖与构建产物
+node_modules/
+npm-debug.log*
+
+# 草稿与调试输出
+*.log
+preview-src/_*.png
+preview-src/*.html
+
+# 系统
+.DS_Store
+Thumbs.db

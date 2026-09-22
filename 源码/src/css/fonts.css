@@ -1,0 +1,43 @@
+/* ==========================================================================
+   像素机架 · 字体装载
+   缝合像素字体 / Fusion Pixel Font 12px（比例版给界面，等宽版给代码与终端）
+   版权 TakWolf · SIL Open Font License 1.1 · 授权全文见同目录 LICENSE-OFL-font.txt
+   家族名带 PixelRig 前缀，避免与其它皮肤或系统字体发生命名碰撞。
+   资源路径为皮肤目录内相对路径；加载器白名单允许本地 woff2。
+
+   ---- 为什么是「12px 档 × CSS 19.2px」（改动前务必读完）-------------------
+   像素字体本质是一张点阵被描边化，每个「设计像素」是一个方格。它要真正利落，
+   字号必须让设计方格落到整数个设备像素上：
+
+       n = CSS字号 × DPR ÷ 设计档位        必须为正整数
+
+   本机实测 DPR = 1.25（3840x2160，AppliedDPI=120）：
+       12px 档 × 19.2px = 24 设备像素 → n = 2   ← 整数
+       12px 档 × 16px   = 20 设备像素 → n = 1.667 ← 分数，必然发虚
+       10px 档 × 16px   = 20 设备像素 → n = 2   ← 也整数，但字形比 12px 档粗
+
+   选 12px 档而不是 10px 档，是因为 12 格点阵比 10 格多两行笔画信息，中文复杂字
+   （赢、囊、摩）不容易挤成一团 —— 两者在本机都能拿到整数倍，那就取信息更多的。
+
+   选 19.2px 而不是 16px，是因为 4K@125% 的屏上 CSS 16px 只画出 20 个设备像素、
+   单像素还比 1080p 屏小一圈，物理上比常规 16px 界面小四成。19.2px 是第一档
+   既满足整数倍、又让物理尺寸回到正常界面水位的字号。
+
+   由此推出的可用字号（DPR 1.25）：9.6 / 19.2 / 28.8。9.6 太小，所以界面只有
+   19.2 一个主档，层次靠颜色、描边与字距体现，不靠缩字号。别写 13px、14px、
+   16px 这类数值，它们都会落回分数倍。
+   ========================================================================== */
+@font-face {
+  font-family: "PixelRig Pix";
+  src: url("assets/fonts/fusion-pixel-12px-proportional.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "PixelRig Mono";
+  src: url("assets/fonts/fusion-pixel-12px-monospaced.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}

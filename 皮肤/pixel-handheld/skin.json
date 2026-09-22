@@ -1,0 +1,33 @@
+{
+  "$schema": "https://schemas.linxin666.org/dsh-skin/v2.json",
+  "skinManifestVersion": 2,
+  "id": "pixel-handheld",
+  "name": "掌机绿",
+  "nameEn": "Handheld Green",
+  "version": "2.0.0",
+  "author": "本地自建 · Pixel Rig",
+  "tagline": "GameBoy 四阶单色绿 · 同款描边与硬投影 · 怀旧掌机",
+  "description": "像素机架（Pixel Rig）主题族之一，取自自建复古像素 UI 的「掌机绿」配色。四阶单色绿，靠明度差而不是色相区分层次；控件语言与街机霓虹完全一致（2px 描边、零模糊硬投影、按下位移），因此换配色不会改变任何交互手感。",
+  "tags": [
+    "pixel",
+    "retro",
+    "gameboy",
+    "mono",
+    "dark",
+    "8bit"
+  ],
+  "accent": "#9bbc0f",
+  "order": 31,
+  "license": "OFL-1.1 (字体) / MIT (皮肤代码)",
+  "licenseUrl": "https://github.com/TakWolf/fusion-pixel-font/blob/master/LICENSE-OFL",
+  "sourceUrl": "https://github.com/TakWolf/fusion-pixel-font",
+  "attribution": "字体：缝合像素字体 Fusion Pixel Font © TakWolf，SIL Open Font License 1.1。主题：像素机架 Pixel Rig。",
+  "contributes": {
+    "stylesheet": "skin.css",
+    "patches": "patches.css"
+  },
+  "preview": {
+    "light": "preview/light.jpg",
+    "dark": "preview/dark.jpg"
+  }
+}

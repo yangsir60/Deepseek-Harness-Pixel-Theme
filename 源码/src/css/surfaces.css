@@ -1,0 +1,220 @@
+/* ==========================================================================
+   像素机架 · 层次骨架（L1 基础面 + L2 语义面）
+   ---------------------------------------------------------------------------
+   层次三条不变量（三套配色共用，由构建期审计强制）：
+     1. 抬升层级越高 → 底色越亮（明暗两模同向）；
+     2. 边框随层级变亮（border-l1 → l4）；
+     3. 阴影一律「零模糊硬位移」——像素语言的物理规则，同时把合成成本压到最低。
+   此处不写任何具体颜色，全部取自 L1 token，故换配色无需改动本文件。
+   ========================================================================== */
+
+:root {
+  --pr-pix: "PixelRig Pix", "Fusion Pixel 12px Proportional SC", ui-sans-serif, system-ui, sans-serif;
+  --pr-mon: "PixelRig Mono", "Fusion Pixel 12px Monospaced SC", ui-monospace, Consolas, monospace;
+  --pr-ui: "PingFang SC", "Microsoft YaHei UI", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+
+  /* 字号阶梯：只能用「在本机 DPR 1.25 下落到整数倍」的档位（推导见 fonts.css）。
+     界面主档 19.2px = 24 设备像素 = 整 2 倍，同时把物理尺寸拉回正常界面水位 ——
+     4K@125% 的屏上 CSS 16px 只画出 20 个设备像素、单像素还更小，物理上比常规
+     16px 界面小四成，这就是「看不清」的一半原因。
+     9.6px 那一档太小，所以界面只有这一个主档；层次靠颜色、描边与字距体现，不靠
+     缩字号 —— 在这个 DPR 下缩字号必然落回分数倍、必然发虚。
+     line-height 也必须落在整数设备像素上：分数行高会把基线推到半个像素上。
+     基准值 24px 是给 DPR 1.0 的屏准备的（24÷12 = 2 倍），其余由下方媒体查询覆盖。 */
+  --pr-fs-ui: 24px;
+  --pr-fs-code: 24px;
+  --pr-lh: calc(var(--pr-fs-ui) * 1.5);
+
+  /* 正文与侧栏各一档，理由都是「比例」而不是锐度：
+     · 正文走矢量栈，不受像素整数倍约束，取 17px。原来它一直是官方默认的 14px，
+       而像素界面主档是 19.2px，正文因此比按钮小 37%（实测 57 处 14px 对 18 处 19.2px）。
+     · 侧栏取 16px，替换官方给的 14px。14px 在 DPR 1.25 下是 1.458 倍（分数），
+       16px 是 1.667 倍，比原来更接近整 2 倍，所以不会比现状更虚；选它是因为侧栏导航
+       按钮原来吃像素主档 19.2px、工作区名只有 14px，同一列里差 37%，像两套界面。 */
+  --pr-fs-prose: 17px;
+  --pr-fs-side: 16px;
+
+  /* 圆角：结构性元素（列表行、页签、面板、徽章）保持方角，真正的操作控件、
+     输入框与浮层用 3~4px 柔化 —— 即「有些方角合适、有些圆角柔和点」。 */
+  --pr-radius: 3px;
+  --pr-radius-lg: 4px;
+
+  /* 交互时钟：与参考实现同档，180ms + 轻快回弹曲线 */
+  --pr-dur: 180ms;
+  --pr-ease: cubic-bezier(0.2, 0.8, 0.3, 1);
+
+  /* 硬投影：零模糊、二维位移。控件 2px；按下时整体位移同样距离并收拢投影，
+     于是「按下去」有真实的行程感，而不是只变个颜色。 */
+  --pr-px: 2px;
+  --pr-drop: rgba(22, 19, 41, 0.3);
+  --pr-raise: var(--pr-px) var(--pr-px) 0 0 var(--pr-drop);
+  --pr-flat: 0 0 0 0 var(--pr-drop);
+
+  --pr-scan: rgba(0, 0, 0, 0.06);
+  --pr-vig: rgba(0, 0, 0, 0.1);
+  --dsw-font-family: var(--pr-ui);
+  --ds-font-family-code: var(--pr-mon);
+  --dsw-font-markdown-code-font-family: var(--pr-mon);
+  --dsw-font-markdown-code-block-font-family: var(--pr-mon);
+  --dsw-font-markdown-code-block-small-font-family: var(--pr-mon);
+  background-color: var(--dsw-alias-bg-base);
+  color: var(--dsw-alias-label-primary);
+  font-family: var(--pr-ui);
+  font-size: var(--pr-fs-ui);
+}
+
+/* ---- 设备像素比适配：每档都取「2~3 倍」中物理尺寸最接近 15~20px 的整数倍，
+   于是换显示器、改缩放比例都仍然锐利。
+   只写 min-resolution 并按升序排列，2.0 的机器会依次命中前面所有档、由最后一条
+   生效，故每档只需一行。line-height 引用 --pr-fs-ui，会自动跟着走。 */
+@media (min-resolution: 1.25dppx) { :root { --pr-fs-ui: 19.2px; --pr-fs-code: 19.2px; } }
+@media (min-resolution: 1.5dppx) { :root { --pr-fs-ui: 16px; --pr-fs-code: 16px; } }
+@media (min-resolution: 2dppx) { :root { --pr-fs-ui: 18px; --pr-fs-code: 18px; } }
+@media (min-resolution: 3dppx) { :root { --pr-fs-ui: 20px; --pr-fs-code: 20px; } }
+
+/* 暗色模：投影加深、CRT 叠层加重 */
+body[data-ds-dark-theme] {
+  --pr-drop: rgba(0, 0, 0, 0.72);
+  --pr-scan: rgba(0, 0, 0, 0.12);
+  --pr-vig: rgba(0, 0, 0, 0.22);
+}
+
+/* ---- CRT 叠层：1px 扫描线 + 四角压暗 ------------------------------------
+   固定定位、不接收指针、静态不参与动画；同时挂上像素网格底纹。
+   纯 CSS 背景，零字节资源，任意分辨率下都严丝合缝落在像素栅格上。 */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  background-image:
+    repeating-linear-gradient(
+      to bottom,
+      var(--pr-scan) 0,
+      var(--pr-scan) 1px,
+      transparent 1px,
+      transparent 3px
+    ),
+    radial-gradient(130% 108% at 50% 50%, transparent 52%, var(--pr-vig) 100%);
+}
+
+/* ---- 选中与光标：像素质感的高对比反白块 -------------------------------- */
+::selection {
+  background: var(--dsw-alias-brand-primary);
+  color: var(--dsw-alias-label-primary-foreground);
+}
+textarea,
+input {
+  caret-color: var(--dsw-alias-brand-primary);
+}
+
+/* ---- 焦点环：方形、双像素、永不靠模糊发光 ------------------------------
+   契约要求可见焦点；这里用 2px 实心边 + 2px 偏移，任何底色上都成立。 */
+:focus-visible {
+  outline: 2px solid var(--pr-focus);
+  outline-offset: 2px;
+}
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ==========================================================================
+   L2 语义面 · 四级抬升落地
+   conversation / root 保持透明：让底色与壁纸透上来（加载器已将 [id=root]
+   背景置透，官方与壁纸引擎都依赖这一点）。只有「面板」才是不透明的像素板。
+
+   实测结论（务必照此理解，否则会误判本段是否生效）：
+   这些 data-dsh-surface 锚点多数落在 display:contents 的包装元素上 —— 不生成
+   盒子，因此 background / border 并不绘制（清点可见 rect=0x0）。真正把层次画
+   出来的是 L1 token 层：官方各面板自己消费 bg-base / bg-layer-1..3 与
+   border-l1..l4，所以层次在根本不依赖本段选择器。本段保留为「包装元素万一
+   生成盒子」时的兜底与意图声明，唯一必须严格守住的是 overlay 那个例外。
+   ========================================================================== */
+
+[data-dsh-surface="root"],
+[data-dsh-surface="conversation"] {
+  background: transparent;
+}
+
+/* L1 — 侧栏：最深的面板，靠右 1px 分隔线立界 */
+[data-dsh-surface="sidebar"] {
+  background: var(--dsw-specific-sidebar-fill);
+  border-right: 2px solid var(--dsw-alias-border-l2);
+}
+
+/* L1 — 右详情列 */
+[data-dsh-surface="details"] {
+  background: var(--dsw-alias-bg-layer-1);
+  border-left: 1px solid var(--dsw-alias-border-l2);
+}
+
+/* L2 — 会话头：本页最强的一条水平分隔，用 2px 硬线压实层级 */
+[data-dsh-surface="session-header"] {
+  background: var(--dsw-alias-bg-layer-1);
+  border-bottom: 2px solid var(--dsw-alias-border-l3);
+}
+
+/* L2 — 输入区：抬起的硬板，上沿一条硬线，无任何模糊 */
+[data-dsh-surface="composer"] {
+  background: var(--dsw-alias-bg-layer-2);
+  border-top: 2px solid var(--dsw-alias-border-l3);
+}
+
+/* 帧级浮层宿主 —— 必须完全透明。
+   实测：该锚点落在 .pI_x6G_overlayLayer 上，是一个常驻的 1600x1000、z=20
+   的全屏层，只用来承载弹层本身。一旦给它底色或边框，就会把整个应用盖死
+   （本项目初版就踩了这个坑：截图得到一整片纯 #2f2820）。
+   真正的模态面板由 patches.css 的 [role="dialog"] 负责样式，不在这里。 */
+[data-dsh-surface="overlay"] {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+/* 滚动口：交给 token 化的滚动条，不再叠加装饰 */
+[data-dsh-part="scrollport"] {
+  background: transparent;
+}
+
+/* ---- 滚动条：方块滑块，无数值圆角 -------------------------------------- */
+* {
+  scrollbar-color: var(--dsh-scrollbar-thumb) transparent;
+}
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--dsw-alias-scrollbar-bg-l1);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--dsh-scrollbar-thumb);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--dsh-scrollbar-thumb-hover);
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* ---- 壁纸与背景艺术的礼让：面板让出一点底，避免与画面打架 --------------
+   皮肤中心的 WE 壁纸标记由 backdrop-scene 汇总；此处仅降低面板不透明度，不做模糊。 */
+[data-dsh-wallpaper-active] [data-dsh-surface="sidebar"],
+[data-dsh-wallpaper-active] [data-dsh-surface="details"] {
+  background: color-mix(in srgb, var(--dsw-alias-bg-layer-1) 82%, transparent);
+}
+
+/* ---- 降级：尊重系统的减少动效 ------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

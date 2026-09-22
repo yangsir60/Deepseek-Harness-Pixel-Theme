@@ -1,0 +1,33 @@
+{
+  "$schema": "https://schemas.linxin666.org/dsh-skin/v2.json",
+  "skinManifestVersion": 2,
+  "id": "pixel-arcade",
+  "name": "街机霓虹",
+  "nameEn": "Arcade Neon",
+  "version": "2.0.0",
+  "author": "本地自建 · Pixel Rig",
+  "tagline": "深蓝紫底 + 霓虹青撞色 · 2px 描边 + 硬投影 · 街机厅质感",
+  "description": "像素机架（Pixel Rig）主题族之一，取自自建复古像素 UI 的「街机霓虹」配色。深蓝紫底、霓虹青强调、玫红危险色，控件是 2px 描边加零模糊硬投影、按下时整体位移并收拢投影；选中态用三重编码（底色 + 左侧色条 + 高亮）。阴影不模糊、无 backdrop 模糊，层次靠明度与可见描边堆出来。",
+  "tags": [
+    "pixel",
+    "retro",
+    "arcade",
+    "neon",
+    "dark",
+    "8bit"
+  ],
+  "accent": "#29adff",
+  "order": 30,
+  "license": "OFL-1.1 (字体) / MIT (皮肤代码)",
+  "licenseUrl": "https://github.com/TakWolf/fusion-pixel-font/blob/master/LICENSE-OFL",
+  "sourceUrl": "https://github.com/TakWolf/fusion-pixel-font",
+  "attribution": "字体：缝合像素字体 Fusion Pixel Font © TakWolf，SIL Open Font License 1.1。主题：像素机架 Pixel Rig。",
+  "contributes": {
+    "stylesheet": "skin.css",
+    "patches": "patches.css"
+  },
+  "preview": {
+    "light": "preview/light.jpg",
+    "dark": "preview/dark.jpg"
+  }
+}

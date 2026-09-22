@@ -1,0 +1,550 @@
+/* 街机霓虹 / Arcade Neon — DSH 皮肤 · 由像素机架构建器生成，请勿手改。 */
+/* 源配色：src/palettes/arcade.json  ·  层次与对比度由构建期审计强制 */
+/* ==========================================================================
+   像素机架 · 字体装载
+   缝合像素字体 / Fusion Pixel Font 12px（比例版给界面，等宽版给代码与终端）
+   版权 TakWolf · SIL Open Font License 1.1 · 授权全文见同目录 LICENSE-OFL-font.txt
+   家族名带 PixelRig 前缀，避免与其它皮肤或系统字体发生命名碰撞。
+   资源路径为皮肤目录内相对路径；加载器白名单允许本地 woff2。
+
+   ---- 为什么是「12px 档 × CSS 19.2px」（改动前务必读完）-------------------
+   像素字体本质是一张点阵被描边化，每个「设计像素」是一个方格。它要真正利落，
+   字号必须让设计方格落到整数个设备像素上：
+
+       n = CSS字号 × DPR ÷ 设计档位        必须为正整数
+
+   本机实测 DPR = 1.25（3840x2160，AppliedDPI=120）：
+       12px 档 × 19.2px = 24 设备像素 → n = 2   ← 整数
+       12px 档 × 16px   = 20 设备像素 → n = 1.667 ← 分数，必然发虚
+       10px 档 × 16px   = 20 设备像素 → n = 2   ← 也整数，但字形比 12px 档粗
+
+   选 12px 档而不是 10px 档，是因为 12 格点阵比 10 格多两行笔画信息，中文复杂字
+   （赢、囊、摩）不容易挤成一团 —— 两者在本机都能拿到整数倍，那就取信息更多的。
+
+   选 19.2px 而不是 16px，是因为 4K@125% 的屏上 CSS 16px 只画出 20 个设备像素、
+   单像素还比 1080p 屏小一圈，物理上比常规 16px 界面小四成。19.2px 是第一档
+   既满足整数倍、又让物理尺寸回到正常界面水位的字号。
+
+   由此推出的可用字号（DPR 1.25）：9.6 / 19.2 / 28.8。9.6 太小，所以界面只有
+   19.2 一个主档，层次靠颜色、描边与字距体现，不靠缩字号。别写 13px、14px、
+   16px 这类数值，它们都会落回分数倍。
+   ========================================================================== */
+@font-face {
+  font-family: "PixelRig Pix";
+  src: url("assets/fonts/fusion-pixel-12px-proportional.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "PixelRig Mono";
+  src: url("assets/fonts/fusion-pixel-12px-monospaced.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ===== L1 · 亮色模（抬升层级越高 → 底色越亮） ===== */
+:root {
+  --dsw-alias-bg-base: #cfcbe8;
+  --dsw-alias-bg-layer-1: #dcd9f0;
+  --dsw-alias-bg-layer-2: #e9e7f7;
+  --dsw-alias-bg-layer-3: #ffffff;
+  --dsw-alias-bg-overlay: #ffffff;
+  --dsw-alias-bg-module-platform: #dcd9f0;
+  --dsw-alias-bg-multi-select: #e8c6d8;
+  --dsw-alias-bg-skeleton: #16132912;
+  --dsw-alias-bg-mask-1: #3a355047;
+  --dsw-alias-bg-mask-2: #3a355029;
+  --dsw-alias-bg-mask-3: #3a355080;
+  --dsw-alias-bg-mask-photo: #3a3550e0;
+  --dsw-alias-bg-mask-drop: #1d2b53b3;
+  --dsw-alias-border-l1: #8f8ac070;
+  --dsw-alias-border-l2-darkmode-thin: #8f8ac06b;
+  --dsw-alias-border-l2: #8f8ac08f;
+  --dsw-alias-border-l3: #8f8ac0;
+  --dsw-alias-border-l4: #a39fcbff;
+  --dsw-alias-border-inverted: #1d2b531a;
+  --dsw-alias-border-inverted2: #1d2b5329;
+  --dsw-alias-line-secondary: #8f8ac073;
+  --dsw-alias-separator-primary: #8f8ac052;
+  --pr-focus: #7a5c00;
+  --pr-select: #e8c6d8;
+  --pr-edge: #8f8ac0;
+  --dsw-alias-brand-primary: #083d63;
+  --dsw-alias-brand-primary-invert: #ffffff;
+  --dsw-alias-brand-primary-new-colorprimary-new-color: #083d63;
+  --dsw-alias-brand-text: #083d63;
+  --dsw-alias-button-primary-fill: #083d63;
+  --dsw-alias-button-primary-hover: #2b5879ff;
+  --dsw-alias-button-primary-dimmed: #083d636b;
+  --dsw-alias-label-primary-foreground: #ffffff;
+  --dsw-alias-button-contrast-fill: #1d2b53;
+  --dsw-alias-button-elevated-fill: #e9e7f7;
+  --dsw-alias-button-floating-fill: #e9e7f7;
+  --dsw-alias-button-floating-hover: #ffffff;
+  --dsw-alias-button-ghost-active-fill: #16132917;
+  --dsw-alias-button-ghost-active-hover: #16132924;
+  --dsw-alias-button-ghost-active-border: #16132952;
+  --dsw-alias-button-info-fill: #b0003c;
+  --dsw-alias-button-info-hover: #bb2457ff;
+  --dsw-alias-button-tool-bar-fill: #16132980;
+  --dsw-alias-button-tool-bar-fill-invisible: #16132957;
+  --dsw-alias-button-tool-bar-hover: #1613299e;
+  --dsw-alias-interactive-bg-hover: #16132914;
+  --dsw-alias-interactive-bg-active: #16132921;
+  --dsw-alias-interactive-bg-hover-solid: #ffffff;
+  --dsw-alias-interactive-bg-hover-accent: #e8c6d8;
+  --dsw-alias-interactive-bg-hover-danger: #b0003c29;
+  --dsw-alias-label-primary: #161329;
+  --dsw-alias-label-primary-bluish: #141830ff;
+  --dsw-alias-label-primary-dimmed: #3f3a68;
+  --dsw-alias-label-primary-inverted: #eef1fb;
+  --dsw-alias-label-secondary: #3f3a68;
+  --dsw-alias-label-tertiary: #4e4a73;
+  --dsw-alias-label-quaternary: #4a466dff;
+  --dsw-alias-label-caption: #4e4a73;
+  --dsw-alias-label-dimmed: #534f78ff;
+  --dsw-alias-state-business-primary: #083d63;
+  --dsw-alias-state-business-subtle: #083d6333;
+  --dsw-alias-state-business-tertiary: #083d631f;
+  --dsw-alias-state-success-primary: #0a6b24;
+  --dsw-alias-state-success-secondary: #0a6b2433;
+  --dsw-alias-state-success-tertiary: #0a6b241f;
+  --dsw-alias-state-warn-primary: #7a5c00;
+  --dsw-alias-state-warn-label: #a28d4dff;
+  --dsw-alias-state-warn-secondary: #7a5c0033;
+  --dsw-alias-state-warn-tertiary: #7a5c001f;
+  --dsw-alias-state-warning-primary: #7a5c00;
+  --dsw-alias-state-error-primary: #b0003c;
+  --dsw-alias-state-error-secondary: #b0003c33;
+  --dsw-alias-markdown-code-block: #a5a1bdff;
+  --dsw-alias-markdown-code-block-banner: #dcd9f0;
+  --dsw-alias-markdown-inline-code: #1613291a;
+  --dsw-alias-markdown-tag: #b0003c8c;
+  --dsw-alias-markdown-placeholder: #4e4a73;
+  --dsw-alias-markdown-citation: #dcd9f0;
+  --dsw-alias-markdown-code-segment-selected: #16132924;
+  --dsw-alias-markdown-code-segment-unselected: #1613290d;
+  --dsw-alias-scrollbar-bg-l1: #1613290a;
+  --dsw-alias-scrollbar-bg-l2: #1613290a;
+  --dsw-alias-scrollbar-hover-l1: #1613294d;
+  --dsw-alias-scrollbar-hover-l2: #1613294d;
+  --dsw-alias-toast-bg: #ffffff;
+  --dsw-alias-tooltip-bg: #ffffff;
+  --dsw-alias-tooltip-fg: #161329;
+  --dsw-hovercard-bg: #ffffff;
+  --dsw-linear-gradient-think: linear-gradient(90deg, #b0003c 0 20%, #083d63 20% 45%, #b0003c 45% 70%, #083d63 70% 100%);
+  --dsw-linear-think-select: #083d63;
+  --dsw-specific-bubble: #e9e7f7;
+  --dsw-specific-bubble-highlight: #ffffff;
+  --dsw-specific-sidebar-fill: #dcd9f0;
+  --dsw-specific-sidebar-nav-item-hover: #16132912;
+  --dsw-specific-sidebar-nav-item-active: #083d632e;
+  --dsw-specific-sidebar-nav-item-active-accent: #083d63;
+  --dsw-specific-menu: #ffffff;
+  --dsw-specific-selector: #ffffff;
+  --dsw-specific-tip: #ffffff;
+  --dsw-specific-input-major: #dcd9f0;
+  --dsw-specific-login-input: #dcd9f0;
+  --dsw-shadow-lv1: 2px 2px 0 0 #3a355080;
+  --dsw-shadow-lv1-blur: 0px;
+  --dsw-shadow-lv2: 4px 4px 0 0 #3a35508c;
+  --dsw-shadow-lv3: 8px 8px 0 0 #3a35509e;
+  --dsw-mask-blur: 0px;
+  --shiki-background: #a5a1bdff;
+  --shiki-foreground: #161329;
+  --dsh-scrollbar-thumb: #16132938;
+  --dsh-scrollbar-thumb-hover: #1613295c;
+  --aion-bg-base: #cfcbe8;
+  --aion-bg-1: #dcd9f0;
+  --aion-bg-2: #e9e7f7;
+  --aion-bg-3: #ffffff;
+  --aion-bg-4: #1613294d;
+  --aion-bg-hover: #16132914;
+  --aion-bg-active: #16132924;
+  --aion-text-primary: #161329;
+  --aion-text-secondary: #3f3a68;
+  --aion-text-tertiary: #4e4a73;
+  --aion-text-disabled: #827ea2ff;
+  --aion-primary: #083d63;
+  --aion-success: #0a6b24;
+  --aion-warning: #7a5c00;
+  --aion-danger: #b0003c;
+  --aion-brand: #b0003c;
+  --aion-aou-1: #d1d1e9ff;
+  --aion-aou-2: #d7d9ebff;
+  --aion-aou-3: #e1e8ecff;
+  --aion-aou-4: #ced8e0ff;
+  --aion-aou-5: #083d63;
+  --aion-aou-6: #527792ff;
+  --aion-fill-2: #e9e7f7;
+  --aion-fill-3: #ffffff;
+  --aion-border-base: #1613292e;
+  --aion-overlay-shadow: 4px 4px 0 0 #3a35508c;
+  --aion-font-sans: var(--pr-ui);
+  --aion-font-mono: var(--pr-mon);
+}
+
+/* ===== L1 · 暗色模 ===== */
+body[data-ds-dark-theme] {
+  --dsw-alias-bg-base: #12102a;
+  --dsw-alias-bg-layer-1: #241f47;
+  --dsw-alias-bg-layer-2: #22345e;
+  --dsw-alias-bg-layer-3: #33406f;
+  --dsw-alias-bg-overlay: #33406f;
+  --dsw-alias-bg-module-platform: #241f47;
+  --dsw-alias-bg-multi-select: #7e2553;
+  --dsw-alias-bg-skeleton: #fff1e812;
+  --dsw-alias-bg-mask-1: #00000047;
+  --dsw-alias-bg-mask-2: #00000029;
+  --dsw-alias-bg-mask-3: #00000080;
+  --dsw-alias-bg-mask-photo: #000000e0;
+  --dsw-alias-bg-mask-drop: #fff1e8b3;
+  --dsw-alias-border-l1: #3a558570;
+  --dsw-alias-border-l2-darkmode-thin: #3a55856b;
+  --dsw-alias-border-l2: #3a55858f;
+  --dsw-alias-border-l3: #3a5585;
+  --dsw-alias-border-l4: #5d749bff;
+  --dsw-alias-border-inverted: #fff1e81a;
+  --dsw-alias-border-inverted2: #fff1e829;
+  --dsw-alias-line-secondary: #3a558573;
+  --dsw-alias-separator-primary: #3a558552;
+  --pr-focus: #ffec27;
+  --pr-select: #7e2553;
+  --pr-edge: #3a5585;
+  --dsw-alias-brand-primary: #29adff;
+  --dsw-alias-brand-primary-invert: #04263a;
+  --dsw-alias-brand-primary-new-colorprimary-new-color: #29adff;
+  --dsw-alias-brand-text: #29adff;
+  --dsw-alias-button-primary-fill: #29adff;
+  --dsw-alias-button-primary-hover: #47b8ffff;
+  --dsw-alias-button-primary-dimmed: #29adff6b;
+  --dsw-alias-label-primary-foreground: #04263a;
+  --dsw-alias-button-contrast-fill: #fff1e8;
+  --dsw-alias-button-elevated-fill: #22345e;
+  --dsw-alias-button-floating-fill: #22345e;
+  --dsw-alias-button-floating-hover: #33406f;
+  --dsw-alias-button-ghost-active-fill: #fff1e817;
+  --dsw-alias-button-ghost-active-hover: #fff1e824;
+  --dsw-alias-button-ghost-active-border: #fff1e852;
+  --dsw-alias-button-info-fill: #ff004d;
+  --dsw-alias-button-info-hover: #ff2466ff;
+  --dsw-alias-button-tool-bar-fill: #fff1e880;
+  --dsw-alias-button-tool-bar-fill-invisible: #fff1e857;
+  --dsw-alias-button-tool-bar-hover: #fff1e89e;
+  --dsw-alias-interactive-bg-hover: #fff1e814;
+  --dsw-alias-interactive-bg-active: #fff1e821;
+  --dsw-alias-interactive-bg-hover-solid: #33406f;
+  --dsw-alias-interactive-bg-hover-accent: #7e2553;
+  --dsw-alias-interactive-bg-hover-danger: #ff004d29;
+  --dsw-alias-label-primary: #fff1e8;
+  --dsw-alias-label-primary-bluish: #e5e9ebff;
+  --dsw-alias-label-primary-dimmed: #c8c4e4;
+  --dsw-alias-label-primary-inverted: #12102a;
+  --dsw-alias-label-secondary: #c8c4e4;
+  --dsw-alias-label-tertiary: #bab5d6;
+  --dsw-alias-label-quaternary: #b1accbff;
+  --dsw-alias-label-caption: #bab5d6;
+  --dsw-alias-label-dimmed: #b3aecfff;
+  --dsw-alias-state-business-primary: #29adff;
+  --dsw-alias-state-business-subtle: #29adff33;
+  --dsw-alias-state-business-tertiary: #29adff1f;
+  --dsw-alias-state-success-primary: #00e436;
+  --dsw-alias-state-success-secondary: #00e43633;
+  --dsw-alias-state-success-tertiary: #00e4361f;
+  --dsw-alias-state-warn-primary: #ffec27;
+  --dsw-alias-state-warn-label: #fff268ff;
+  --dsw-alias-state-warn-secondary: #ffec2733;
+  --dsw-alias-state-warn-tertiary: #ffec271f;
+  --dsw-alias-state-warning-primary: #ffec27;
+  --dsw-alias-state-error-primary: #ff004d;
+  --dsw-alias-state-error-secondary: #ff004d33;
+  --dsw-alias-markdown-code-block: #0d0c1eff;
+  --dsw-alias-markdown-code-block-banner: #241f47;
+  --dsw-alias-markdown-inline-code: #fff1e81a;
+  --dsw-alias-markdown-tag: #ff004d8c;
+  --dsw-alias-markdown-placeholder: #bab5d6;
+  --dsw-alias-markdown-citation: #241f47;
+  --dsw-alias-markdown-code-segment-selected: #fff1e824;
+  --dsw-alias-markdown-code-segment-unselected: #fff1e80d;
+  --dsw-alias-scrollbar-bg-l1: #fff1e80a;
+  --dsw-alias-scrollbar-bg-l2: #fff1e80a;
+  --dsw-alias-scrollbar-hover-l1: #fff1e84d;
+  --dsw-alias-scrollbar-hover-l2: #fff1e84d;
+  --dsw-alias-toast-bg: #33406f;
+  --dsw-alias-tooltip-bg: #33406f;
+  --dsw-alias-tooltip-fg: #fff1e8;
+  --dsw-hovercard-bg: #33406f;
+  --dsw-linear-gradient-think: linear-gradient(90deg, #ff004d 0 20%, #29adff 20% 45%, #ff004d 45% 70%, #29adff 70% 100%);
+  --dsw-linear-think-select: #29adff;
+  --dsw-specific-bubble: #22345e;
+  --dsw-specific-bubble-highlight: #33406f;
+  --dsw-specific-sidebar-fill: #241f47;
+  --dsw-specific-sidebar-nav-item-hover: #fff1e812;
+  --dsw-specific-sidebar-nav-item-active: #29adff2e;
+  --dsw-specific-sidebar-nav-item-active-accent: #29adff;
+  --dsw-specific-menu: #33406f;
+  --dsw-specific-selector: #33406f;
+  --dsw-specific-tip: #33406f;
+  --dsw-specific-input-major: #241f47;
+  --dsw-specific-login-input: #241f47;
+  --dsw-shadow-lv1: 2px 2px 0 0 #00000080;
+  --dsw-shadow-lv1-blur: 0px;
+  --dsw-shadow-lv2: 4px 4px 0 0 #0000008c;
+  --dsw-shadow-lv3: 8px 8px 0 0 #0000009e;
+  --dsw-mask-blur: 0px;
+  --shiki-background: #0d0c1eff;
+  --shiki-foreground: #fff1e8;
+  --dsh-scrollbar-thumb: #fff1e838;
+  --dsh-scrollbar-thumb-hover: #fff1e85c;
+  --aion-bg-base: #12102a;
+  --aion-bg-1: #241f47;
+  --aion-bg-2: #22345e;
+  --aion-bg-3: #33406f;
+  --aion-bg-4: #fff1e84d;
+  --aion-bg-hover: #fff1e814;
+  --aion-bg-active: #fff1e824;
+  --aion-text-primary: #fff1e8;
+  --aion-text-secondary: #c8c4e4;
+  --aion-text-tertiary: #bab5d6;
+  --aion-text-disabled: #777391ff;
+  --aion-primary: #29adff;
+  --aion-success: #00e436;
+  --aion-warning: #ffec27;
+  --aion-danger: #ff004d;
+  --aion-brand: #ff004d;
+  --aion-aou-1: #242650ff;
+  --aion-aou-2: #233e6bff;
+  --aion-aou-3: #324d80ff;
+  --aion-aou-4: #31568cff;
+  --aion-aou-5: #29adff;
+  --aion-aou-6: #69c6ffff;
+  --aion-fill-2: #22345e;
+  --aion-fill-3: #33406f;
+  --aion-border-base: #fff1e82e;
+  --aion-overlay-shadow: 4px 4px 0 0 #0000008c;
+  --aion-font-sans: var(--pr-ui);
+  --aion-font-mono: var(--pr-mon);
+}
+
+/* ==========================================================================
+   像素机架 · 层次骨架（L1 基础面 + L2 语义面）
+   ---------------------------------------------------------------------------
+   层次三条不变量（三套配色共用，由构建期审计强制）：
+     1. 抬升层级越高 → 底色越亮（明暗两模同向）；
+     2. 边框随层级变亮（border-l1 → l4）；
+     3. 阴影一律「零模糊硬位移」——像素语言的物理规则，同时把合成成本压到最低。
+   此处不写任何具体颜色，全部取自 L1 token，故换配色无需改动本文件。
+   ========================================================================== */
+
+:root {
+  --pr-pix: "PixelRig Pix", "Fusion Pixel 12px Proportional SC", ui-sans-serif, system-ui, sans-serif;
+  --pr-mon: "PixelRig Mono", "Fusion Pixel 12px Monospaced SC", ui-monospace, Consolas, monospace;
+  --pr-ui: "PingFang SC", "Microsoft YaHei UI", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+
+  /* 字号阶梯：只能用「在本机 DPR 1.25 下落到整数倍」的档位（推导见 fonts.css）。
+     界面主档 19.2px = 24 设备像素 = 整 2 倍，同时把物理尺寸拉回正常界面水位 ——
+     4K@125% 的屏上 CSS 16px 只画出 20 个设备像素、单像素还更小，物理上比常规
+     16px 界面小四成，这就是「看不清」的一半原因。
+     9.6px 那一档太小，所以界面只有这一个主档；层次靠颜色、描边与字距体现，不靠
+     缩字号 —— 在这个 DPR 下缩字号必然落回分数倍、必然发虚。
+     line-height 也必须落在整数设备像素上：分数行高会把基线推到半个像素上。
+     基准值 24px 是给 DPR 1.0 的屏准备的（24÷12 = 2 倍），其余由下方媒体查询覆盖。 */
+  --pr-fs-ui: 24px;
+  --pr-fs-code: 24px;
+  --pr-lh: calc(var(--pr-fs-ui) * 1.5);
+
+  /* 正文与侧栏各一档，理由都是「比例」而不是锐度：
+     · 正文走矢量栈，不受像素整数倍约束，取 17px。原来它一直是官方默认的 14px，
+       而像素界面主档是 19.2px，正文因此比按钮小 37%（实测 57 处 14px 对 18 处 19.2px）。
+     · 侧栏取 16px，替换官方给的 14px。14px 在 DPR 1.25 下是 1.458 倍（分数），
+       16px 是 1.667 倍，比原来更接近整 2 倍，所以不会比现状更虚；选它是因为侧栏导航
+       按钮原来吃像素主档 19.2px、工作区名只有 14px，同一列里差 37%，像两套界面。 */
+  --pr-fs-prose: 17px;
+  --pr-fs-side: 16px;
+
+  /* 圆角：结构性元素（列表行、页签、面板、徽章）保持方角，真正的操作控件、
+     输入框与浮层用 3~4px 柔化 —— 即「有些方角合适、有些圆角柔和点」。 */
+  --pr-radius: 3px;
+  --pr-radius-lg: 4px;
+
+  /* 交互时钟：与参考实现同档，180ms + 轻快回弹曲线 */
+  --pr-dur: 180ms;
+  --pr-ease: cubic-bezier(0.2, 0.8, 0.3, 1);
+
+  /* 硬投影：零模糊、二维位移。控件 2px；按下时整体位移同样距离并收拢投影，
+     于是「按下去」有真实的行程感，而不是只变个颜色。 */
+  --pr-px: 2px;
+  --pr-drop: rgba(22, 19, 41, 0.3);
+  --pr-raise: var(--pr-px) var(--pr-px) 0 0 var(--pr-drop);
+  --pr-flat: 0 0 0 0 var(--pr-drop);
+
+  --pr-scan: rgba(0, 0, 0, 0.06);
+  --pr-vig: rgba(0, 0, 0, 0.1);
+  --dsw-font-family: var(--pr-ui);
+  --ds-font-family-code: var(--pr-mon);
+  --dsw-font-markdown-code-font-family: var(--pr-mon);
+  --dsw-font-markdown-code-block-font-family: var(--pr-mon);
+  --dsw-font-markdown-code-block-small-font-family: var(--pr-mon);
+  background-color: var(--dsw-alias-bg-base);
+  color: var(--dsw-alias-label-primary);
+  font-family: var(--pr-ui);
+  font-size: var(--pr-fs-ui);
+}
+
+/* ---- 设备像素比适配：每档都取「2~3 倍」中物理尺寸最接近 15~20px 的整数倍，
+   于是换显示器、改缩放比例都仍然锐利。
+   只写 min-resolution 并按升序排列，2.0 的机器会依次命中前面所有档、由最后一条
+   生效，故每档只需一行。line-height 引用 --pr-fs-ui，会自动跟着走。 */
+@media (min-resolution: 1.25dppx) { :root { --pr-fs-ui: 19.2px; --pr-fs-code: 19.2px; } }
+@media (min-resolution: 1.5dppx) { :root { --pr-fs-ui: 16px; --pr-fs-code: 16px; } }
+@media (min-resolution: 2dppx) { :root { --pr-fs-ui: 18px; --pr-fs-code: 18px; } }
+@media (min-resolution: 3dppx) { :root { --pr-fs-ui: 20px; --pr-fs-code: 20px; } }
+
+/* 暗色模：投影加深、CRT 叠层加重 */
+body[data-ds-dark-theme] {
+  --pr-drop: rgba(0, 0, 0, 0.72);
+  --pr-scan: rgba(0, 0, 0, 0.12);
+  --pr-vig: rgba(0, 0, 0, 0.22);
+}
+
+/* ---- CRT 叠层：1px 扫描线 + 四角压暗 ------------------------------------
+   固定定位、不接收指针、静态不参与动画；同时挂上像素网格底纹。
+   纯 CSS 背景，零字节资源，任意分辨率下都严丝合缝落在像素栅格上。 */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  background-image:
+    repeating-linear-gradient(
+      to bottom,
+      var(--pr-scan) 0,
+      var(--pr-scan) 1px,
+      transparent 1px,
+      transparent 3px
+    ),
+    radial-gradient(130% 108% at 50% 50%, transparent 52%, var(--pr-vig) 100%);
+}
+
+/* ---- 选中与光标：像素质感的高对比反白块 -------------------------------- */
+::selection {
+  background: var(--dsw-alias-brand-primary);
+  color: var(--dsw-alias-label-primary-foreground);
+}
+textarea,
+input {
+  caret-color: var(--dsw-alias-brand-primary);
+}
+
+/* ---- 焦点环：方形、双像素、永不靠模糊发光 ------------------------------
+   契约要求可见焦点；这里用 2px 实心边 + 2px 偏移，任何底色上都成立。 */
+:focus-visible {
+  outline: 2px solid var(--pr-focus);
+  outline-offset: 2px;
+}
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ==========================================================================
+   L2 语义面 · 四级抬升落地
+   conversation / root 保持透明：让底色与壁纸透上来（加载器已将 [id=root]
+   背景置透，官方与壁纸引擎都依赖这一点）。只有「面板」才是不透明的像素板。
+
+   实测结论（务必照此理解，否则会误判本段是否生效）：
+   这些 data-dsh-surface 锚点多数落在 display:contents 的包装元素上 —— 不生成
+   盒子，因此 background / border 并不绘制（清点可见 rect=0x0）。真正把层次画
+   出来的是 L1 token 层：官方各面板自己消费 bg-base / bg-layer-1..3 与
+   border-l1..l4，所以层次在根本不依赖本段选择器。本段保留为「包装元素万一
+   生成盒子」时的兜底与意图声明，唯一必须严格守住的是 overlay 那个例外。
+   ========================================================================== */
+
+[data-dsh-surface="root"],
+[data-dsh-surface="conversation"] {
+  background: transparent;
+}
+
+/* L1 — 侧栏：最深的面板，靠右 1px 分隔线立界 */
+[data-dsh-surface="sidebar"] {
+  background: var(--dsw-specific-sidebar-fill);
+  border-right: 2px solid var(--dsw-alias-border-l2);
+}
+
+/* L1 — 右详情列 */
+[data-dsh-surface="details"] {
+  background: var(--dsw-alias-bg-layer-1);
+  border-left: 1px solid var(--dsw-alias-border-l2);
+}
+
+/* L2 — 会话头：本页最强的一条水平分隔，用 2px 硬线压实层级 */
+[data-dsh-surface="session-header"] {
+  background: var(--dsw-alias-bg-layer-1);
+  border-bottom: 2px solid var(--dsw-alias-border-l3);
+}
+
+/* L2 — 输入区：抬起的硬板，上沿一条硬线，无任何模糊 */
+[data-dsh-surface="composer"] {
+  background: var(--dsw-alias-bg-layer-2);
+  border-top: 2px solid var(--dsw-alias-border-l3);
+}
+
+/* 帧级浮层宿主 —— 必须完全透明。
+   实测：该锚点落在 .pI_x6G_overlayLayer 上，是一个常驻的 1600x1000、z=20
+   的全屏层，只用来承载弹层本身。一旦给它底色或边框，就会把整个应用盖死
+   （本项目初版就踩了这个坑：截图得到一整片纯 #2f2820）。
+   真正的模态面板由 patches.css 的 [role="dialog"] 负责样式，不在这里。 */
+[data-dsh-surface="overlay"] {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+/* 滚动口：交给 token 化的滚动条，不再叠加装饰 */
+[data-dsh-part="scrollport"] {
+  background: transparent;
+}
+
+/* ---- 滚动条：方块滑块，无数值圆角 -------------------------------------- */
+* {
+  scrollbar-color: var(--dsh-scrollbar-thumb) transparent;
+}
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--dsw-alias-scrollbar-bg-l1);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--dsh-scrollbar-thumb);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--dsh-scrollbar-thumb-hover);
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* ---- 壁纸与背景艺术的礼让：面板让出一点底，避免与画面打架 --------------
+   皮肤中心的 WE 壁纸标记由 backdrop-scene 汇总；此处仅降低面板不透明度，不做模糊。 */
+[data-dsh-wallpaper-active] [data-dsh-surface="sidebar"],
+[data-dsh-wallpaper-active] [data-dsh-surface="details"] {
+  background: color-mix(in srgb, var(--dsw-alias-bg-layer-1) 82%, transparent);
+}
+
+/* ---- 降级：尊重系统的减少动效 ------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

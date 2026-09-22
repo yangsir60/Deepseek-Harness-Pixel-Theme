@@ -1,0 +1,35 @@
+{
+  "$schema": "https://schemas.linxin666.org/dsh-skin/v2.json",
+  "skinManifestVersion": 2,
+  "id": "pixel-amber",
+  "name": "终端琥珀",
+  "nameEn": "Amber Terminal",
+  "version": "2.0.0",
+  "author": "本地自建 · Pixel Rig",
+  "tagline": "DOS 单色琥珀 · 低亮度护眼 · 同款描边与硬投影",
+  "description": "像素机架（Pixel Rig）主题族之一，取自自建复古像素 UI 的「终端琥珀」配色。P3 荧光屏式单色琥珀，低亮度护眼：文字、强调、选中同为一个琥珀色，靠明度而非色相分层。控件语言与另两套完全一致，换配色不改交互手感。",
+  "tags": [
+    "pixel",
+    "retro",
+    "crt",
+    "amber",
+    "terminal",
+    "mono",
+    "dark",
+    "8bit"
+  ],
+  "accent": "#ffb000",
+  "order": 32,
+  "license": "OFL-1.1 (字体) / MIT (皮肤代码)",
+  "licenseUrl": "https://github.com/TakWolf/fusion-pixel-font/blob/master/LICENSE-OFL",
+  "sourceUrl": "https://github.com/TakWolf/fusion-pixel-font",
+  "attribution": "字体：缝合像素字体 Fusion Pixel Font © TakWolf，SIL Open Font License 1.1。主题：像素机架 Pixel Rig。",
+  "contributes": {
+    "stylesheet": "skin.css",
+    "patches": "patches.css"
+  },
+  "preview": {
+    "light": "preview/light.jpg",
+    "dark": "preview/dark.jpg"
+  }
+}

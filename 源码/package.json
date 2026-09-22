@@ -1,0 +1,17 @@
+{
+  "name": "pixel-rig",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "像素机架 Pixel Rig — DSH 复古像素主题族（构建器 / 校验器 / 预览截图）",
+  "scripts": {
+    "audit": "node tools/audit.mjs",
+    "build": "node src/build.mjs",
+    "verify": "node tools/verify.mjs",
+    "shot": "node tools/shot.mjs",
+    "install:skins": "powershell -File tools/install.ps1"
+  },
+  "devDependencies": {
+    "puppeteer-core": "^24.0.0"
+  }
+}

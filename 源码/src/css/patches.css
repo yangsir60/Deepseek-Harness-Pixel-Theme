@@ -1,0 +1,435 @@
+/* ==========================================================================
+   像素机架 · 组件层（L3 自由选择器）
+   ---------------------------------------------------------------------------
+   选择器纪律：只用官方稳定锚点 —— 元素名、role、data-dsh-* 语义属性、
+   data-tone / data-terminal 等官方 data 属性。不写任何 CSS-Modules 哈希类名，
+   官方前端重建后本文件不需要改动。
+
+   物理语言（取自自建复古像素 UI 的成熟配方，三套配色共用）：
+     - 凸起控件 = 本色底 + 2px 可见描边 + 零模糊二维外投影（2px/4px/8px 三档）；
+     - 按下 = 整体位移同样的距离 + 投影收拢到 0，于是「按下去」有真实的行程感；
+     - 凹陷控件 = 更深一档的底 + 同样 2px 描边，不加投影（不靠内嵌斜面）；
+     - 圆角分两档：结构性元素（列表行、页签、面板、徽章、代码块）恒为方角，
+       真正的操作控件、输入框与浮层用 3~4px 柔化。
+
+   动效纪律（对应皮肤中心性能契约）：
+     - 只过渡 transform / background-color / border-color，全部低成本；
+     - 位移靠 transform，不碰 top/left；不触碰 filter / backdrop-filter；
+     - 入场动效只碰 opacity 与 transform，一次播放，不循环。
+   ========================================================================== */
+
+/* ---- 物理规则一：圆角归零 ----------------------------------------------
+   加载器把本文件每条选择器都加上 html[data-dsh-skin] 前缀，特异性 (0,1,1)
+   即已胜过官方的单类名规则，故无需 !important。 */
+* {
+  border-radius: 0;
+}
+
+/* ==========================================================================
+   字体分工与字号阶梯
+   界面外壳：像素比例体；正文与输入区：可读栈（长中文段落要能读）。
+
+   字号策略（2026-09-21 修正）：**字体族下得广，字号只给主控件**。
+   这里原来把 button/[role=treeitem]/[data-tone]/th/input/select… 一并钉在 19.2px
+   主档上（即 12px 设计档在 DPR 1.25 下的整 2 倍，推导见 fonts.css），但 DSH 里
+   button 语义过载 —— 主操作、状态药丸、图标按钮全都是 button。实测底部状态栏那个
+   药丸 button.bOPqQW_pill 被抬到 19.2px，而官方给它所在整条状态栏定的是 13px，
+   于是「6 轮 6 步·78 tok/s」比正文还大（用户画红框反馈）。
+   本机装着的其余主题（xp / minecraft / summer-liquid-glass / maid-atelier）做法都是
+   只换字体族与颜色、字号交回官方阶梯，这里改为同一策略：像素族仍然全域生效（那是
+   主题身份），字号只给真正的主控件，元信息不再比正文还大。
+   ========================================================================== */
+button,
+input,
+select,
+kbd,
+[role="tab"],
+[role="menuitem"],
+[role="option"],
+[role="treeitem"],
+[data-tone],
+th,
+[data-dsh-part="composer-chip"],
+[data-dsh-part="new-session"] {
+  font-family: var(--pr-pix);
+  /* 字形参数与字号无关，跟着字体族一起全域下发 */
+  letter-spacing: 0;
+  font-kerning: none;
+  font-variant-ligatures: none;
+  -webkit-font-smoothing: none;
+  font-smooth: never;
+}
+
+/* 界面文字不再有 19.2px 这一档：新会话与页签都收到侧栏同一档 16px。
+   19.2px 是全套里唯一完全锐利的档位（12px 设计档的整 2 倍），但用户两次反馈按钮
+   偏大、并画红框圈出三个页签（实测身高 44px，是正文行的两倍多）。尺寸一致比绝对
+   锐度更重要 —— 代价是像素体落在 16px 的 1.67 倍上，笔画略软（候选对照见
+   tools/status-ab.mjs 出的图）。19.2px 仍留给代码块（--pr-fs-code），代码该大、
+   而且那一档仍然完全锐利。 */
+[data-dsh-part="new-session"] {
+  font-size: var(--pr-fs-side);
+  /* 行高落在整数设备像素上：1.75 × 16px = 28px = 35 设备像素 */
+  line-height: 1.75;
+}
+
+/* 微标签：区块标题、表头、徽章 —— 不再缩字号（1.25 DPR 下没有更小的锐利档），
+   改用整数像素的字距退到次要层。 */
+[data-tone],
+th,
+[role="tab"],
+[data-dsh-part="header"] {
+  letter-spacing: 1px;
+}
+
+/* 代码、终端、工具输出：像素等宽体 */
+code,
+pre,
+[data-terminal],
+[data-diff],
+[data-read],
+[data-search] {
+  font-family: var(--pr-mon);
+  font-size: var(--pr-fs-code);
+  line-height: var(--pr-lh);
+  letter-spacing: 0;
+  font-kerning: none;
+  font-variant-ligatures: none;
+  -webkit-font-smoothing: none;
+  font-smooth: never;
+}
+
+/* 正文与输入区：显式回到可读栈，并给正文一档更大的字号。
+   这条规则原来挂在 [data-dsh-part="message-body"] 上，但官方实际给段落的是
+   message-row —— 规则从来没命中过，正文一直停在官方默认的 14px，而像素界面主档是
+   19.2px，于是正文比按钮小一大截。机制上要注意：**继承永远输给任何声明**，所以
+   在 message-row 上设字号能让「没有自己声明字号」的正文继承到，而徽章、时间戳这些
+   自己声明了 12/13px 的元素不受影响；再对 p/li 直接兜一层，防止段落自带 14px 声明。 */
+[data-dsh-part="message-row"] {
+  font-size: var(--pr-fs-prose) !important;
+  line-height: 1.65;
+}
+/* verify-allow: hash-class —— 用户消息的纯文本 run 局部名 _plainRun，用来兜住「段落自带字号」的例外 */
+[data-dsh-part="message-body"],
+[data-dsh-part="message-row"] :is(p, li, blockquote, [class*="_plainRun"]) {
+  font-family: var(--pr-ui);
+  font-size: var(--pr-fs-prose) !important;
+  /* 行高按比例走：官方给的是固定 24px，不会跟着字号放大 */
+  line-height: 1.65;
+}
+
+/* 输入区与正文同档，否则发送后字号会突变（原来是 14px 对 14px 才对得上）。 */
+[data-dsh-part="composer-input"],
+[data-composer-input] {
+  font-family: var(--pr-ui);
+  font-size: var(--pr-fs-prose) !important;
+  line-height: 1.65;
+}
+
+/* ---- 侧栏：把导航条目与工作区名/会话名收敛到同一档 16px -------------------
+   导航条目（任务看板/记忆系统/皮肤中心/插件市场）原来吃像素主档 19.2px，
+   工作区名与会话名吃官方的 14px，同一列里差 37%，看起来像两套界面。
+   分组标题改用 [role="tree"] 这个稳定锚点；会话标题与区块标签没有更稳定的锚点，
+   只能按官方 CSS-module 的可读局部名做子串匹配 —— 官方改名会静默失配、不破坏布局，
+   下面逐条显式豁免并写明理由。 */
+/* verify-allow: hash-class —— 会话标题局部名 _title 稳定，且外层有 treeitem 角色锚点限定范围 */
+/* verify-allow: hash-class —— 「工作区」区块标签没有更稳定的锚点，失配只是不放大，不破坏布局 */
+button[data-dsh-part="sidebar-entry"] {
+  font-size: var(--pr-fs-side) !important;
+  /* 行高取 1.75 → 28px = 35 设备像素（整数），1.6 以下会落到半个像素上 */
+  line-height: 1.75;
+}
+[role="tree"] > *,
+[class*="sectionLabel"],
+[role="treeitem"][data-dsh-responsive-part="sidebar-entry"] [class*="_title"] {
+  font-size: var(--pr-fs-side) !important;
+}
+
+/* ---- 页签：可点面积够用即可，不再占地方 -----------------------------------
+   这里的尺寸被两次方向相反的反馈夹在中间：先嫌「按钮太小、内边距左右挤着了」，
+   于是加了内边距与最小高度；后嫌「有点大、有点违和」，并画红框圈出「对话/轨迹/
+   审批」—— 实测身高 44px，是正文行的两倍多，而其余文字都已收到 16~17px。
+   现在字号从 19.2px 降到 16px（与侧栏同档），内边距与最小高度回落，但仍保留足够
+   的点按面积（34px 高，高于 24px 的可点下限）。
+   页签是主导航而非微标签，所以顺带清掉微标签组给的 1px 字距（本规则在后，胜出）。 */
+[role="tablist"] {
+  gap: 2px !important;
+}
+[role="tab"] {
+  font-size: var(--pr-fs-side);
+  /* 1.5 × 16px = 24px = 30 设备像素（整数） */
+  line-height: 1.5;
+  letter-spacing: 0;
+  padding: 5px 12px !important;
+  min-height: 30px;
+}
+
+/* ---- 像素数字：状态与用量数字用等宽体对齐 ------------------------------ */
+[data-dsh-part="usage-chart"],
+[data-dsh-part="today-card"],
+[data-dsh-part="bank-card"],
+[data-dsh-part="host-table"],
+[data-dsh-part="host-row"] {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ==========================================================================
+   凸起控件：按钮、主操作
+   三条硬经验（均由实测得出，改动前请先读）：
+   1. 底色与描边必须带 !important。本皮肤两张表排在官方表之前，官方按钮组件用
+      自己的类名以 (0,2,2) 声明底色；实测同特异性插在最前会输，!important 或
+      (0,2,3) 才能赢。
+   2. 一律写 button，不要写 [data-dsh-surface="sidebar"] button。后者是 (0,2,2)，
+      会反过来压过主操作的 [data-dsh-part="new-session"] (0,2,1)，造成本表内部
+      自相残杀 —— 「新会话」按钮曾经填不上强调色正是这个原因。
+      于是按钮形成清晰阶梯：button (0,1,2) < 主操作 (0,2,1) < 主操作悬停 (0,2,2)。
+   3. 主操作默认只描边不填色，悬停才填 —— 这是参考配方的做法，也让强调色
+      在静态画面里保持克制，主次不打架。
+   ========================================================================== */
+button,
+[role="button"] {
+  background-color: var(--dsw-alias-button-elevated-fill) !important;
+  border: 2px solid var(--dsw-alias-border-l3) !important;
+  /* 操作控件柔化一点点。带 !important 是因为官方按钮组件可能以自己的类名在
+     更高特异性上声明了圆角，而本皮肤表在前会输；方与圆的分界必须确定。 */
+  border-radius: var(--pr-radius) !important;
+  box-shadow: var(--pr-raise);
+  transition:
+    transform var(--pr-dur) var(--pr-ease),
+    background-color var(--pr-dur) var(--pr-ease),
+    border-color var(--pr-dur) var(--pr-ease);
+}
+
+/* ---- 页签扁平化：页签是标签，不是按钮 -------------------------------------
+   放大看出「违和」不在尺寸而在形：上面的 button 规则给每个页签都加了 2px 描边 +
+   亮底色，三个并排就成了三个独立的按钮盒子（浅色填充浮在深底上、带凸起质感），
+   而紧邻的筛选胶囊是扁平的，节奏就此被打乱。
+   这里把描边与底色收掉，只保留选中态的 2px 强调下划线与文字提亮。
+   点按面积不变（仍 59×37），所以不违背上一轮「页签太小」的反馈。
+   生效范围必须用 :not([aria-selected="true"]) 把选中项排除出去 —— 本规则带
+   !important，若连带覆盖选中项，会把选中态的底色与强调下划线一起压掉，三个页签
+   就长得一模一样、看不出选中了哪个（实测过：那样算出来选中项底色是 rgba(0,0,0,0)、
+   阴影 none）。!important 是必须的：button 规则的描边与底色也带 !important，
+   不写就会被它压回去。 */
+[role="tab"]:not([aria-selected="true"]) {
+  background-color: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* 按下：整体位移 + 投影收拢，行程与投影偏移等长 */
+button:active,
+[role="button"]:active {
+  transform: translate(var(--pr-px), var(--pr-px));
+  box-shadow: var(--pr-flat);
+}
+
+@media (hover: hover) {
+  button:hover,
+  [role="button"]:hover {
+    background-color: var(--dsw-alias-bg-layer-1) !important;
+    border-color: var(--dsw-alias-brand-primary) !important;
+  }
+}
+
+/* 主操作按钮：强调色描边 + 强调色文字，排在上面 button:hover 之后 */
+[data-dsh-part="new-session"],
+button[type="submit"] {
+  border-color: var(--dsw-alias-brand-primary) !important;
+  color: var(--dsw-alias-brand-primary);
+}
+
+@media (hover: hover) {
+  [data-dsh-part="new-session"]:hover,
+  button[type="submit"]:hover {
+    background-color: var(--dsw-alias-brand-primary) !important;
+    border-color: var(--dsw-alias-brand-primary) !important;
+    color: var(--dsw-alias-label-primary-foreground);
+  }
+}
+
+button:disabled {
+  /* 0.5 会把浅底上的深字淡到读不出来；禁用态仍要能读出「这是什么按钮」 */
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ==========================================================================
+   凹陷控件：输入框、下拉、工具输出块、代码块
+   凹 = 更深一档的底 + 同样的 2px 描边，而不是内嵌斜面。
+   ========================================================================== */
+input,
+select,
+textarea {
+  background-color: var(--dsw-specific-input-major);
+  border: 2px solid var(--dsw-alias-border-l3) !important;
+  border-radius: var(--pr-radius) !important;
+}
+
+/* 工具输出块是内容面板而不是操作控件 —— 保持方角 */
+[data-terminal],
+[data-diff],
+[data-read],
+[data-search] {
+  background-color: var(--dsw-specific-input-major);
+  border: 2px solid var(--dsw-alias-border-l3) !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  border-color: var(--dsw-alias-brand-primary) !important;
+}
+
+/* ---- 标签 / 徽章：像素小块，方角、硬边 --------------------------------- */
+[data-tone] {
+  padding: 1px 5px;
+  border: 1px solid var(--dsw-alias-border-l4);
+  background-color: var(--dsw-alias-bg-layer-1);
+}
+
+/* ==========================================================================
+   浮层：菜单、对话框、提示
+   投影按参考配方的档位：控件 2px、菜单 4px、模态 8px。
+   入场动效只碰 opacity 与 transform（合成属性），一次播放，不循环。
+   ========================================================================== */
+[role="dialog"],
+[role="menu"],
+[role="listbox"],
+[role="tooltip"] {
+  background: var(--dsw-alias-bg-overlay);
+  border: 2px solid var(--dsw-alias-border-l3);
+  border-radius: var(--pr-radius-lg);
+  box-shadow: var(--dsw-shadow-lv2);
+  animation: {{id}}-rise var(--pr-dur) var(--pr-ease);
+}
+
+[role="dialog"] {
+  box-shadow: var(--dsw-shadow-lv3);
+}
+
+/* 侧栏会话行是 role=treeitem（实测锚点），与菜单项同等对待 */
+[role="menuitem"],
+[role="option"],
+[role="treeitem"] {
+  transition:
+    background-color var(--pr-dur) var(--pr-ease),
+    color var(--pr-dur) var(--pr-ease);
+}
+
+@media (hover: hover) {
+  [role="menuitem"]:hover,
+  [role="option"]:hover,
+  [role="treeitem"]:hover {
+    background-color: var(--dsw-alias-interactive-bg-hover);
+  }
+}
+
+/* 选中态三重编码：底色 + 左侧色条 + 文字转强调色（不依赖单一颜色维度） */
+[role="menuitem"][aria-selected="true"],
+[role="option"][aria-selected="true"],
+[role="option"][aria-checked="true"],
+[role="treeitem"][aria-selected="true"] {
+  background-color: var(--pr-select);
+  color: var(--dsw-alias-label-primary);
+  box-shadow: inset 3px 0 0 var(--dsw-alias-brand-primary);
+}
+
+/* ---- 页签：选中态用 2px 硬下划线 + 文字提亮，不用圆角气泡 -----------------
+   文字取 label-primary 而不是强调色：实测掌机绿下强调色 #9bbc0f 落在抬高面
+   #306230 上只有 3.29:1，低于正文 4.5:1 的门槛；选中由下划线与底色承担，
+   强调色留在下划线上已经足够表达选中。 */
+[role="tab"][aria-selected="true"] {
+  /* 带 !important 是为了和 button 规则的 !important 底色同处一层：同层之后比特异性，
+     [role="tab"][aria-selected="true"] (0,2,0) 高于 button (0,0,1)，选中态才显示得出来。 */
+  background-color: var(--dsw-alias-interactive-bg-hover) !important;
+  border-color: transparent !important;
+  color: var(--dsw-alias-label-primary);
+  box-shadow: inset 0 -2px 0 var(--dsw-alias-brand-primary) !important;
+}
+
+/* ==========================================================================
+   代码、表格、分隔线
+   ========================================================================== */
+code,
+pre {
+  background-color: var(--dsw-alias-markdown-code-block);
+}
+
+pre {
+  border: 1px solid var(--dsw-alias-border-l2);
+}
+
+/* 像素虚线分隔：4px 实 / 4px 空，纯 CSS、静态、零成本 */
+hr {
+  border: 0;
+  height: 2px;
+  background: repeating-linear-gradient(
+    to right,
+    var(--dsw-alias-border-l3) 0 4px,
+    transparent 4px 8px
+  );
+}
+
+table {
+  border-collapse: collapse;
+}
+
+th,
+td {
+  border: 1px solid var(--dsw-alias-border-l2);
+  padding: 4px 8px;
+}
+
+th {
+  background: var(--dsw-alias-bg-layer-2);
+  color: var(--dsw-alias-label-secondary);
+}
+
+/* ---- 工具调用块：运行中给一条强调色实心轨，静态不闪烁 ------------------- */
+[data-running] {
+  box-shadow: inset 3px 0 0 var(--dsw-alias-brand-primary);
+}
+
+/* ==========================================================================
+   插件区域：task-board / ssh / git-graph 及其它已 opt-in 的插件
+   ========================================================================== */
+[data-dsh-plugin] {
+  --dsh-scrollbar-thumb: var(--dsw-alias-border-l4);
+}
+
+[data-dsh-part="card"],
+[data-dsh-part="today-card"],
+[data-dsh-part="balance-card"],
+[data-dsh-part="trend-card"],
+[data-dsh-part="plan-card"],
+[data-dsh-part="bank-card"],
+[data-dsh-part="status"] {
+  background: var(--dsw-alias-bg-layer-1);
+  border: 2px solid var(--dsw-alias-border-l3);
+  box-shadow: var(--pr-raise);
+}
+
+[data-dsh-part="header"],
+[data-dsh-part="tag-filter"],
+[data-dsh-part="filter-bar"] {
+  border-bottom: 2px solid var(--dsw-alias-border-l3);
+}
+
+/* ==========================================================================
+   入场动效 · 唯一的关键帧
+   名字带皮肤 id 前缀，避免跨皮肤碰撞（加载器亦会对通用名告警）。
+   ========================================================================== */
+@keyframes {{id}}-rise {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

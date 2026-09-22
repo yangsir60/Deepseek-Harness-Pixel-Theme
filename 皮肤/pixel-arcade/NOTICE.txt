@@ -1,0 +1,19 @@
+像素机架 Pixel Rig — 第三方资源与授权声明
+================================================================
+
+1) 缝合像素字体 / Fusion Pixel Font（本皮肤内置 assets/fonts/ 下两个 woff2）
+   Copyright (c) 2022, TakWolf (https://takwolf.com)
+   Reserved Font Name 'Fusion Pixel'.
+   授权：SIL Open Font License, Version 1.1（全文见 LICENSE-OFL-font.txt）
+   来源：https://github.com/TakWolf/fusion-pixel-font
+   上游字形授权：方舟像素字体 Ark Pixel Font (OFL-1.1)、美咲フォント Misaki
+   (无类型许可证，兼容 OFL-1.1)、美績点陣體 MisekiBitmap (OFL-1.1)、
+   精品點陣體 7x7 / 9x9 (OFL-1.1)、俐方體 11 號 Cubic 11 (OFL-1.1)、
+   Galmuri (OFL-1.1)。
+   本皮肤未修改字体文件，仅按 OFL 允许的方式随皮肤目录再分发。
+
+2) 皮肤代码（skin.css / patches.css / skin.json）
+   由本仓库生成，按 MIT 授权使用。像素斜面配方（凸起/凹陷/按下翻转）为通用技术，
+   参考自 NES.css 与 98.css 的公开实现思路，未复制其代码。
+
+3) 本皮肤不含 hooks.mjs，不执行任何脚本，全部效果由声明式 CSS 与本地字体完成。
