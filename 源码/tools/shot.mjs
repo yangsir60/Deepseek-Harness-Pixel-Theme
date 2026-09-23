@@ -712,6 +712,99 @@ try {
       for (const t of thinkChain.tabs) console.log(`      [role=tab] ${t}`)
     }
 
+    /* ---- 亮色「白底白字」排查：图标按钮与悬停提示框 ------------------------
+       按文字算的对比度审计抓不到这两类：发送箭头是 SVG 图标、不是文字；提示框要
+       悬停才出现。而这两处恰恰是「白底白字」的高发地 —— 本皮肤用 !important 把
+       按钮与浮层的底色换成了主题面，但前景仍由官方给（官方原本配的是强调色填充
+       + 反白前景、深色提示框 + 白字），底色一换前景就对不上了。
+       这里把输入区附近的按钮与悬停后的提示框逐个量出来，谁白底白字一目了然。
+       注意必须放在 page.evaluate 之外 —— 里面不是 async，写 await 会直接语法报错。 */
+    /* 提示框与浮层只在悬停时才出现在可见状态里，所以逐个悬停候选触发器再量。
+       量完把鼠标移到角落，否则浮层会留在后面的截图里。
+       悬停范围要够宽：状态药丸、消息动作按钮、输入区的 trigger 都可能挂提示框。 */
+    const dumpOverlays = () => {
+      const lum = (c) => {
+        const m = /rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)/.exec(c || '')
+        if (!m) return null
+        const f = (v) => {
+          const s = Number(v) / 255
+          return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4
+        }
+        return 0.2126 * f(m[1]) + 0.7152 * f(m[2]) + 0.0722 * f(m[3])
+      }
+      const dump = (el) => {
+        const cs = getComputedStyle(el)
+        const r = el.getBoundingClientRect()
+        const d = el.dataset ?? {}
+        const keys = Object.keys(d).filter((k) => /dsh|composer|dockkit/i.test(k))
+        const svg = el.querySelector('svg')
+        const scs = svg ? getComputedStyle(svg) : null
+        const a = lum(cs.color)
+        const b = lum(cs.backgroundColor)
+        const cr = a == null || b == null ? '-' : ((Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05)).toFixed(2)
+        const cls = typeof el.className === 'string' ? el.className.slice(0, 24) : ''
+        return `<${el.tagName.toLowerCase()}${el.getAttribute('role') ? ` role=${el.getAttribute('role')}` : ''}> ${Math.round(r.width)}x${Math.round(r.height)}@${Math.round(r.left)},${Math.round(r.top)} cls=${cls} ${keys.map((k) => `${k}=${d[k]}`).join(' ')} 文字="${(el.textContent ?? '').trim().slice(0, 22)}" | 文字色=${cs.color} 底色=${cs.backgroundColor} 对比=${cr}${scs ? ` | svg fill=${scs.fill}` : ''}`
+      }
+      const vh = innerHeight
+      const btns = [...document.querySelectorAll('button')].filter((b) => {
+        const r = b.getBoundingClientRect()
+        return r.width > 0 && r.top > vh * 0.55
+      })
+      const tips = [
+        ...document.querySelectorAll(
+          '[role="tooltip"], [role="menu"], [role="listbox"], [class*="ooltip"], [class*="opover"]',
+        ),
+      ].filter((t) => t.getBoundingClientRect().width > 0)
+      return { btns: btns.map(dump), tips: tips.map(dump) }
+    }
+    const iconDump = await page.evaluate(dumpOverlays)
+    console.log(`  输入区按钮（${label}，共 ${iconDump.btns.length} 个）：`)
+    for (const s of iconDump.btns) console.log(`      ${s}`)
+
+    const hoverSel = ['[aria-label="复制"]', 'button[class*="pill"]', 'button[class*="trigger"]', 'button[class*="add"]']
+    const seenTip = new Set()
+    for (const sel of hoverSel) {
+      const h = await page.$(sel)
+      if (!h) continue
+      try {
+        await h.hover()
+      } catch {
+        continue
+      }
+      await sleep(420)
+      const after = await page.evaluate(dumpOverlays)
+      for (const t of after.tips) if (!seenTip.has(t)) seenTip.add(t)
+    }
+    console.log(`  悬停浮层与提示框（${label}，共 ${seenTip.size} 个）：`)
+    for (const t of seenTip) console.log(`      ${t}`)
+
+    /* 图标为什么不跟着 color 走？把「主操作按钮」的图标真实结构打出来。
+       fill/stroke 若写死在 SVG 内部，改 color 是无效的 —— 声明永远赢过继承。 */
+    const iconDetail = await page.evaluate(() => {
+      const btn = document.querySelector('button[class*="_primary"], button[class*="primary"]')
+      if (!btn) return '(没找到主操作按钮)'
+      const cs = getComputedStyle(btn)
+      const svg = btn.querySelector('svg')
+      const parts = []
+      if (svg) {
+        const scs = getComputedStyle(svg)
+        parts.push(`svg: color=${scs.color} fill=${scs.fill} stroke=${scs.stroke} mask=${scs.maskImage} bg=${scs.backgroundImage}`)
+        for (const child of svg.querySelectorAll('*')) {
+          const ccs = getComputedStyle(child)
+          parts.push(
+            `${child.tagName.toLowerCase()}${child.getAttribute('fill') ? `[fill=${child.getAttribute('fill')}]` : ''}${child.getAttribute('stroke') ? `[stroke=${child.getAttribute('stroke')}]` : ''}: color=${ccs.color} fill=${ccs.fill} stroke=${ccs.stroke}`,
+          )
+        }
+        parts.push(`svgHTML=${svg.outerHTML.slice(0, 200)}`)
+      } else {
+        parts.push('按钮内没有 svg')
+      }
+      return `按钮 color=${cs.color} bg=${cs.backgroundColor} bgImg=${cs.backgroundImage}\n           ${parts.join('\n           ')}`
+    })
+    console.log(`  主操作按钮的图标结构（${label}）：\n           ${iconDetail}`)
+    await page.mouse.move(2, 2)
+    await sleep(250)
+
     const file = join(outDir, `${label}.jpg`)
     await page.screenshot({ path: file, type: 'jpeg', quality: 88 })
     // 同时留一份无损 PNG 供 tools/inspect-shot.mjs 逐像素核对

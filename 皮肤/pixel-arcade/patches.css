@@ -184,9 +184,16 @@ button[data-dsh-part="sidebar-entry"] {
       于是按钮形成清晰阶梯：button (0,1,2) < 主操作 (0,2,1) < 主操作悬停 (0,2,2)。
    3. 主操作默认只描边不填色，悬停才填 —— 这是参考配方的做法，也让强调色
       在静态画面里保持克制，主次不打架。
+   4. 排除用量插件的热力图格子与用量列表行（usg_cell / usg_day）：它们也是
+      <button>，但视觉上不是按钮 —— 格子靠**内联样式**按用量上色、行只有一条下边线。
+      被本条接管后，格子的用量色会被 !important 连内联色一起压平、还多出 2px 描边与
+      硬投影，整张热力图变成一片同色（实测：格子应显示 rgb(61,122,81)，实际被压成
+      rgb(228,238,212)）。只能在这里排除，不能事后重置 —— !important 一旦声明，
+      只能用 !important 压回，而那样又会连内联色一起压掉，热力图就没救了。
+      用带参数的 :not()（按参数最高档算特异性，不累加），按钮阶梯不受影响。
    ========================================================================== */
-button,
-[role="button"] {
+button:not([class~="usg_cell"], [class~="usg_day"]),
+[role="button"]:not([class~="usg_cell"], [class~="usg_day"]) {
   background-color: var(--dsw-alias-button-elevated-fill) !important;
   border: 2px solid var(--dsw-alias-border-l3) !important;
   /* 操作控件柔化一点点。带 !important 是因为官方按钮组件可能以自己的类名在
@@ -214,6 +221,29 @@ button,
   background-color: transparent !important;
   border-color: transparent !important;
   box-shadow: none !important;
+}
+
+/* ---- 反白前景修正：亮色下的「白底白字」-------------------------------------
+   官方给这两类组件配的是「恒定白的前景 + 深色底」，而本皮肤用 !important 把底色换成了
+   随明暗变化的主題面。暗色下主题面本来就是深的，白字看不出问题；亮色下主题面变浅，
+   白字就直接消失了 —— 这不是「暗色没调好」，是亮色专属。
+
+   实测（掌机绿，tools/shot.mjs 的浮层探针）：
+     · 发送按钮 button.uV2eYG_primary  亮色 白字于 #e4eed4 = 1.20:1  暗色于 #306230 = 7.20:1
+     · 「复制」提示框 [role=tooltip]    亮色 白字于 #f6faf0 = 1.06:1
+   1.06 与 1.20 都等于「看不见」，与用户反馈的「白底的、有字但看不到」「发送箭头看不清」一致。
+
+   修法是让**前景跟着底色走**（label-primary 亮色是深、暗色是浅），而不是把底色改回深色：
+   底色一旦改回深色，亮色下这个按钮与提示框就会成为界面里仅有的深色块，反而更突兀。
+   只改前景、不动底色，所以其余按钮与浮层的外观一点没变 —— 这是本次最小化的改动。
+   aria-label 是语义锚点、比哈希类名稳；再补一条 button 上的 _primary 类名兜住同类
+   主操作按钮（只作用于 button：本皮肤的 button 规则已把所有按钮底色统一成主题面，
+   所以这些按钮上的 label-primary 在明暗两种模式下都成立）。 */
+/* verify-allow: hash-class —— 官方主操作按钮的局部名 _primary，且已限定在 button 上 */
+[role="tooltip"],
+button[aria-label="发送消息"],
+button[class*="_primary"] {
+  color: var(--dsw-alias-label-primary) !important;
 }
 
 /* 按下：整体位移 + 投影收拢，行程与投影偏移等长 */
@@ -417,6 +447,41 @@ th {
 [data-dsh-part="tag-filter"],
 [data-dsh-part="filter-bar"] {
   border-bottom: 2px solid var(--dsw-alias-border-l3);
+}
+
+/* ---- 用量插件（@ychris12138/dsh-usage-stats）配色接管 ----------------------
+   它没有走上面的 data-dsh-part 约定，类名是普通全局名（usg_panel 这种，不是
+   CSS-modules 哈希），所以能靠 class 子串匹配稳定命中。它把 UI 从浮层搬进侧栏之后
+   （自 v0.3.1「Sidebar-only UI」起），有两处配色与侧栏对不上：
+
+   1) 底色差两级。面板 / 页头 / 供应商下拉用的是 --dsw-alias-bg-overlay —— 那是
+      「浮层色」的语义（对话框、菜单、气泡，天生比页面亮）。实测本皮肤亮色下
+      bg-overlay = s3 = #f6faf0（近白），而侧栏底 --dsw-specific-sidebar-fill
+      = s1 = #d2e0bc；内嵌之后就成了一块明显的白斑。改为与侧栏同层的 s1。
+   2) 供应商色是硬编码的（--usg-providerAccent: #1f6feb 蓝等），还拿它做 8% 渐变
+      铺满整张账号卡，绿色主题里就出现大块蓝调。这里只压「大块偏色」：卡片回中性面，
+      并把它的两个私有变量指回主题 token（--usg-blue 用于日柱与「今日」格描边、
+      --usg-cellEmpty 用于空日历格）。供应商 chip 与配额进度条的小面积品牌色保留，
+      供应商区分不丢 —— 这就是本次「最小化修复」的边界。
+
+   注意：**不能**用 !important 去压 .usg_cell 的 background —— 热力图是按用量
+   内联上色的，压了会把整张热力图抹平；所以只改它的私有变量。
+   选择器用 class 整词匹配（~=）而不是子串匹配（*=）：插件用的是普通全局类名（非哈希），
+   整词匹配更准（usg_panel 不会误伤 usg_panelFoo），也不会触发「依赖哈希类名」告警。 */
+[class~="usg_panel"],
+[class~="usg_header"],
+[class~="usg_providerSelect"] {
+  background-color: var(--dsw-alias-bg-layer-1) !important;
+}
+
+[class~="usg_panel"] {
+  --usg-blue: var(--dsw-alias-brand-primary) !important;
+  --usg-cellEmpty: var(--dsw-alias-bg-layer-2) !important;
+}
+
+[class~="usg_accountCard"] {
+  /* 去掉那层 8% 供应商品牌色渐变 */
+  background: none !important;
 }
 
 /* ==========================================================================

@@ -10,3 +10,6 @@ preview-src/*.html
 # 系统
 .DS_Store
 Thumbs.db
+# 嵌套的预览源目录也要忽略临时图
+**/preview-src/_*.png
+**/preview-src/*.html
