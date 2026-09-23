@@ -805,6 +805,95 @@ try {
     await page.mouse.move(2, 2)
     await sleep(250)
 
+    /* ---- 侧栏底色链 --------------------------------------------------------
+       用户反复反馈「侧栏底色跟主题不一致」。皮肤靠 [data-dsh-surface="sidebar"]
+       给侧栏上色，所以从树行往上走到根、逐层打印底色与该属性，看皮肤色断在哪一层、
+       哪一层漏出官方底色。顺便量用量插件的**真实**计算值（不再靠合成页面推断）。 */
+    const sidebarChain = await page.evaluate(() => {
+      const out = []
+      let node = document.querySelector('[role="treeitem"]')
+      let i = 0
+      while (node && i < 14) {
+        const cs = getComputedStyle(node)
+        const d = node.dataset ?? {}
+        const cls =
+          typeof node.className === 'string' && node.className
+            ? `.${node.className.split(' ')[0].slice(0, 22)}`
+            : ''
+        out.push(
+          `${'  '.repeat(i)}${node.tagName.toLowerCase()}${d.dshSurface ? `[surf=${d.dshSurface}]` : ''}${node.getAttribute('role') ? `[role=${node.getAttribute('role')}]` : ''}${cls} bg=${cs.backgroundColor} img=${cs.backgroundImage.slice(0, 28)}`,
+        )
+        node = node.parentElement
+        i += 1
+      }
+      const usg = ['usg_panel', 'usg_header', 'usg_accountCard', 'usg_badge', 'usg_cell'].map((c) => {
+        const el = document.querySelector(`[class~="${c}"]`)
+        if (!el) return `${c}: 页面上不存在`
+        const cs = getComputedStyle(el)
+        return `${c}: bg=${cs.backgroundColor} img=${cs.backgroundImage.slice(0, 42)}`
+      })
+      const surf = document.querySelector('[data-dsh-surface="sidebar"]')
+      return {
+        chain: out.join('\n           '),
+        usg: usg.join('\n           '),
+        surf: surf ? `存在，bg=${getComputedStyle(surf).backgroundColor}` : '不存在',
+        usgCount: document.querySelectorAll('[class*="usg_"]').length,
+      }
+    })
+    console.log(`  侧栏底色链（${label}）：\n           ${sidebarChain.chain}`)
+    console.log(`  [data-dsh-surface="sidebar"]（${label}）：${sidebarChain.surf}`)
+    console.log(`  用量插件元素数（${label}）：${sidebarChain.usgCount}`)
+    console.log(`  用量插件真实计算值（${label}）：\n           ${sidebarChain.usg}`)
+
+    /* ---- 壁纸层夺取验证（在真实页面里做，作用域真实生效）-------------------
+       皮肤中心挂壁纸时会注入一段 rootNeutralizer，用 !important 把 html 刷白、
+       把被标记的外壳面强制透明。这里把那段**原文**追加到页面（皮肤之后，与实际
+       顺序一致），再挂一个带 data-dsh-wallpaper-surface 的面板，看皮肤的规则能否
+       压过它。用真实页面而不是合成页，是因为皮肤样式表带加载器的作用域前缀，
+       合成页复现不了这一点。 */
+    const wpCheck = await page.evaluate(() => {
+      const st = document.createElement('style')
+      st.textContent = `
+        html[data-dsh-wallpaper-active] { background-color: white !important; background-image: none !important; }
+        body[data-dsh-wallpaper-active],
+        html[data-dsh-wallpaper-active] [id="root"],
+        html[data-dsh-wallpaper-active] [data-dsh-wallpaper-surface] {
+          background-color: transparent !important; background-image: none !important; }`
+      document.head.appendChild(st)
+      document.documentElement.setAttribute('data-dsh-wallpaper-active', '')
+      document.body.setAttribute('data-dsh-wallpaper-active', '')
+      const mk = (withSidebar) => {
+        const host = document.createElement('div')
+        host.setAttribute('data-dsh-wallpaper-surface', '')
+        host.style.cssText = 'position:fixed;left:-9999px;top:0;width:80px;height:80px'
+        if (withSidebar) {
+          const inner = document.createElement('div')
+          inner.setAttribute('data-dsh-surface', 'sidebar')
+          inner.style.cssText = 'width:40px;height:40px'
+          host.appendChild(inner)
+        }
+        document.body.appendChild(host)
+        return host
+      }
+      const plain = mk(false)
+      const withSb = mk(true)
+      const out = {
+        plain: getComputedStyle(plain).backgroundColor,
+        withSidebar: getComputedStyle(withSb).backgroundColor,
+        bgBase: getComputedStyle(document.body).getPropertyValue('--dsw-alias-bg-base').trim(),
+        sideFill: getComputedStyle(document.body).getPropertyValue('--dsw-specific-sidebar-fill').trim(),
+      }
+      st.remove()
+      plain.remove()
+      withSb.remove()
+      document.documentElement.removeAttribute('data-dsh-wallpaper-active')
+      document.body.removeAttribute('data-dsh-wallpaper-active')
+      return out
+    })
+    console.log(
+      `  壁纸层夺取（${label}）：普通外壳面=${wpCheck.plain}  含侧栏的外壳面=${wpCheck.withSidebar}  | 主题 bg-base=${wpCheck.bgBase} 主题 sidebar-fill=${wpCheck.sideFill}`,
+    )
+
     const file = join(outDir, `${label}.jpg`)
     await page.screenshot({ path: file, type: 'jpeg', quality: 88 })
     // 同时留一份无损 PNG 供 tools/inspect-shot.mjs 逐像素核对

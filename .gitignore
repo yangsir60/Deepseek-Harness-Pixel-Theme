@@ -13,3 +13,4 @@ Thumbs.db
 # 嵌套的预览源目录也要忽略临时图
 **/preview-src/_*.png
 **/preview-src/*.html
+**/preview-src/*-ab.png

@@ -467,15 +467,20 @@ input {
   background: transparent;
 }
 
-/* L1 — 侧栏：最深的面板，靠右 1px 分隔线立界 */
+/* L1 — 侧栏：最深的面板，靠右 1px 分隔线立界。
+   带 !important 是必需的：皮肤中心的壁纸层会以 !important 把整屏外壳面强制透明
+   （见下方「背景层」一节），普通声明会被直接压掉。
+   另外这些锚点多落在 display:contents 的包装元素上、本身不画底色，真正画的是
+   L1 token 层；这里带 !important 是为了「万一它生成盒子」以及拿回被壁纸层
+   改成透明的外壳面时也守住侧栏色。 */
 [data-dsh-surface="sidebar"] {
-  background: var(--dsw-specific-sidebar-fill);
+  background: var(--dsw-specific-sidebar-fill) !important;
   border-right: 2px solid var(--dsw-alias-border-l2);
 }
 
 /* L1 — 右详情列 */
 [data-dsh-surface="details"] {
-  background: var(--dsw-alias-bg-layer-1);
+  background: var(--dsw-alias-bg-layer-1) !important;
   border-left: 1px solid var(--dsw-alias-border-l2);
 }
 
@@ -531,11 +536,51 @@ input {
   background: transparent;
 }
 
-/* ---- 壁纸与背景艺术的礼让：面板让出一点底，避免与画面打架 --------------
-   皮肤中心的 WE 壁纸标记由 backdrop-scene 汇总；此处仅降低面板不透明度，不做模糊。 */
-[data-dsh-wallpaper-active] [data-dsh-surface="sidebar"],
-[data-dsh-wallpaper-active] [data-dsh-surface="details"] {
-  background: color-mix(in srgb, var(--dsw-alias-bg-layer-1) 82%, transparent);
+/* ---- 背景层（皮肤中心壁纸）不能吃掉主题的硬边面板 ------------------------
+   皮肤中心挂上壁纸时会注入一段 rootNeutralizer（源码见
+   @linxin666/dsh-client-ui-skin-center/lib/client.js，ensureLayers）：
+
+     html[data-dsh-wallpaper-active] { background-color: white !important;
+                                       background-image: none !important; }
+     body[data-dsh-wallpaper-active],
+     html[data-dsh-wallpaper-active] [id="root"],
+     html[data-dsh-wallpaper-active] [data-dsh-wallpaper-surface] {
+       background-color: transparent !important; background-image: none !important; }
+
+   也就是：把 html 刷成纯白（暗色刷黑）、把 body / #root 与「整屏外壳面」
+   （AppFrame frame、conversation root、details root，用插件自己打的
+   data-dsh-wallpaper-surface 标记，不依赖哈希类名）全部强制透明，好让 z-index:-2
+   的壁纸层透上来。
+
+   本皮肤的面板是**不透明**的硬边像素面，跟着透明就会整片露出壁纸的冷色 ——
+   实测用户截图：侧栏整片是官方冷白 #e0f8f8（色相图 78% 的格子不属于本皮肤配色），
+   而控件仍是主题绿（因为按钮规则本来就有 !important，插件没碰它们）。
+   这就是「侧栏还是蓝底、跟主题不一致」的真正原因：不是缺 token，是这一段把面板
+   用 !important 压透明了，而本皮肤的面板声明当时没有 !important。
+
+   所以按插件自己打的标记把它们夺回来。两个写法上的坑必须记下来：
+   ① 皮肤的样式表会被加载器加作用域前缀（`:root`→scope、其余→`scope <sel>`），
+      所以**指向前缀祖先的选择器是死规则**（写 `html[...]` 会变成 `scope html[...]`，
+      永不匹配）—— 只能从作用域之内、即被标记的元素本身下手。
+   ② 插件那段是 `!important` + 特异性 `html[a] [b]` = (0,2,1)，同层比特异性，所以
+      这里必须把特异性堆上去。实测过：只写两遍属性是 (0,2,0)（加载器的作用域前缀
+      只贡献 (0,0,1) 那一档），**压不过它**，普通外壳面仍是透明；靠 `#root`（ID 是
+      (1,0,0)）或 `:has()` 加档才赢得下来。下面几条都留着，覆盖「标记在 #root 上」
+      与「标记在 #root 之内」两种情形。
+   代价要说清楚：**像素主题下壁纸不再透出**（这正是「硬边不透明」的取舍）。
+   想保留壁纸应当去皮肤中心关掉背景，而不是让主题漏色。 */
+[data-dsh-wallpaper-surface],
+[data-dsh-wallpaper-surface][data-dsh-wallpaper-surface],
+[id="root"] [data-dsh-wallpaper-surface],
+#root[data-dsh-wallpaper-surface] {
+  background-color: var(--dsw-alias-bg-base) !important;
+  background-image: none !important;
+}
+
+/* 包含侧栏的那个外壳面仍要深一档，否则侧栏与内容区会糊成同一个绿 */
+[data-dsh-wallpaper-surface]:has([data-dsh-surface="sidebar"]),
+[data-dsh-wallpaper-surface][data-dsh-wallpaper-surface]:has([data-dsh-surface="sidebar"]) {
+  background-color: var(--dsw-specific-sidebar-fill) !important;
 }
 
 /* ---- 降级：尊重系统的减少动效 ------------------------------------------ */
